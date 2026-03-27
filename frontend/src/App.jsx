@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import CustomerDashboard from './components/CustomerDashboard';
+import AdminDashboard from './componentes/AdminDashboard';  
 
 function App() {
   const currentUser = null; 
