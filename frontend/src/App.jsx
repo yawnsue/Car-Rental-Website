@@ -9,6 +9,7 @@ import ReservationPage from "./components/ReservationPage";
 import ReservationsOverviewPage from "./components/ReservationsOverviewPage";
 import TripDetailsPage from "./components/TripDetailsPage";
 import AccountPage from "./components/AccountPage";
+import AdminDashboard from './components/AdminDashboard'; // IDonovan added this import
 
 {
   /* 
@@ -30,6 +31,7 @@ function ProtectedRoute({ children }) {
 
 function App()
 {
+  const currentUser = null;// Idonovan added this because locally it would force the login screen first  
   return (
     <Router basename="/car-rental">
       <Routes>
