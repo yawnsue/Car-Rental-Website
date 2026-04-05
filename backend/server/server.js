@@ -19,7 +19,7 @@ mongoose.connect('mongodb://localhost:27017/turo_rental_db', {
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/vehicles', require('./routes/vehicleRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
-app.use('/api/features', require('./routes/featureRoutes'));
+app.use('/api/features', require('./routes/featuresRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 app.listen(PORT, () => {
