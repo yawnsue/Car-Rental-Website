@@ -44,6 +44,7 @@ function App()
         <Route path="/reservations" element={<ProtectedRoute><ReservationsOverviewPage /></ProtectedRoute>} />
         <Route path="/trip-details/:tripId" element={<ProtectedRoute><TripDetailsPage /></ProtectedRoute>} />
         <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminDashboard />} /> // IDonovan added this route
       </Routes>
     </Router>
   );
