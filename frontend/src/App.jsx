@@ -11,21 +11,27 @@ import TripDetailsPage from "./components/TripDetailsPage";
 import AccountPage from "./components/AccountPage";
 import AdminDashboard from './components/AdminDashboard'; // IDonovan added this import
 
-{
-  /* 
-    TEMP. ROUTING SETUP
-    I disabled route protection for front-end UI Dev.
-    Whoever's doing backend / authentication integration
-    can add protected routes and redirect logic back here.
-  */
-}
-
 // Redirects to login if no token is found
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
   if (!token) {
     return <Navigate to="/" replace />;
   }
+  return children;
+}
+
+function AdminRoute({ children }) { // Sam
+  const token = localStorage.getItem("token");
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!currentUser || currentUser.role !== "Administrator") {
+    return <Navigate to="/browse" replace />;
+  }
+
   return children;
 }
 

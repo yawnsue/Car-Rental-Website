@@ -1,23 +1,20 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 import logo from "../assets/black-rock-logo.png";
 
-const currentReservations = [
-  {
-    id: "reservation-1",
-    vehicleName: "2023 Ford Mustang GT",
-    totalPrice: 400,
-    dateRange: "June 24 - June 27, 2026",
-    status: "Confirmed",
-    imageClass: "trip-image",
-    pickupLocation: "Orlando, FL",
-  },
-];
-
-function ReservationsOverviewPage()
-{
+function ReservationsOverviewPage() {
   const navigate = useNavigate();
+
+  const currentReservations = useMemo(() => {
+    return JSON.parse(localStorage.getItem("reservations")) || [];
+  }, []);
+
+  const handleCancel = (reservationId) => {
+    const updated = currentReservations.filter((r) => r._id !== reservationId);
+    localStorage.setItem("reservations", JSON.stringify(updated));
+    window.location.reload();
+  };
 
   return (
     <div className="dashboard-page">
@@ -36,44 +33,26 @@ function ReservationsOverviewPage()
             </div>
 
             <nav className="sidebar-nav">
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/browse")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/browse")}>
                 Dashboard
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/trips")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/trips")}>
                 My Trips
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/vehicles")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/vehicles")}>
                 Browse Vehicles
               </button>
-              <button
-                className="sidebar-nav-item active"
-                onClick={() => navigate("/reservations")}
-              >
+              <button className="sidebar-nav-item active" onClick={() => navigate("/reservations")}>
                 Reservations
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/account")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/account")}>
                 Account
               </button>
             </nav>
           </div>
 
           <div className="sidebar-bottom">
-            <button
-              className="btn btn-secondary dashboard-btn-sm"
-              onClick={() => navigate("/")}
-            >
+            <button className="btn btn-secondary dashboard-btn-sm" onClick={() => navigate("/")}>
               Logout
             </button>
           </div>
@@ -91,56 +70,74 @@ function ReservationsOverviewPage()
             <div className="trips-panel-header">
               <div className="trips-panel-copy">
                 <h3>Active Bookings</h3>
-                <p>Only current reservations that are still upcoming or active appear here.</p>
+                <p>Reservations created during your current app session appear here.</p>
               </div>
             </div>
 
-            <div className="trips-list">
-              {currentReservations.map((reservation) => (
-                <article className="trip-card" key={reservation.id}>
-                  <div className={reservation.imageClass}></div>
+            {currentReservations.length === 0 ? (
+              <div className="empty-state">
+                <h3>No reservations yet.</h3>
+                <p>Reserve a vehicle to see it here.</p>
+                <div className="empty-state-actions">
+                  <button
+                    className="btn btn-primary dashboard-btn-sm"
+                    onClick={() => navigate("/vehicles")}
+                  >
+                    Browse Vehicles
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="trips-list">
+                {currentReservations.map((reservation) => (
+                  <article className="trip-card" key={reservation._id}>
+                    <div className={reservation.imageClass || "trip-image"}></div>
 
-                  <div className="trip-info">
-                    <div className="trip-title-row">
-                      <h4 className="trip-title">{reservation.vehicleName}</h4>
-                      <span className="trip-status upcoming">
-                        {reservation.status}
-                      </span>
+                    <div className="trip-info">
+                      <div className="trip-title-row">
+                        <h4 className="trip-title">{reservation.vehicleName}</h4>
+                        <span className="trip-status upcoming">
+                          {reservation.status || "Confirmed"}
+                        </span>
+                      </div>
+
+                      <div className="trip-meta">
+                        <div className="trip-meta-row">
+                          <span className="trip-meta-dot"></span>
+                          <span>{reservation.dateRange}</span>
+                        </div>
+
+                        <div className="trip-meta-row">
+                          <span className="trip-meta-dot"></span>
+                          <span>Pickup: {reservation.pickupLocation}</span>
+                        </div>
+
+                        <div className="trip-meta-row">
+                          <span className="trip-meta-dot"></span>
+                          <span>Total: ${reservation.totalPrice}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="trip-meta">
-                      <div className="trip-meta-row">
-                        <span className="trip-meta-dot"></span>
-                        <span>{reservation.dateRange}</span>
-                      </div>
+                    <div className="trip-actions">
+                      <button
+                        className="btn dashboard-btn-sm trip-btn-outline"
+                        onClick={() => navigate(`/trip-details/${reservation._id}`)}
+                      >
+                        View Details
+                      </button>
 
-                      <div className="trip-meta-row">
-                        <span className="trip-meta-dot"></span>
-                        <span>Pickup: {reservation.pickupLocation}</span>
-                      </div>
-
-                      <div className="trip-meta-row">
-                        <span className="trip-meta-dot"></span>
-                        <span>Total: ${reservation.totalPrice}</span>
-                      </div>
+                      <button
+                        className="btn dashboard-btn-sm trip-btn-danger"
+                        onClick={() => handleCancel(reservation._id)}
+                      >
+                        Cancel Trip
+                      </button>
                     </div>
-                  </div>
-
-                  <div className="trip-actions">
-                    <button
-                      className="btn dashboard-btn-sm trip-btn-outline"
-                      onClick={() => navigate(`/trip-details/${reservation.id}`)}
-                    >
-                      View Details
-                    </button>
-
-                    <button className="btn dashboard-btn-sm trip-btn-danger">
-                      Cancel Trip
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         </main>
       </div>

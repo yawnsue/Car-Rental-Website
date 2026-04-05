@@ -38,7 +38,8 @@ router.post('/register', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error.', error });
+        console.error('REGISTER ERROR:', error);
+        res.status(500).json({ message: 'Internal server error.', error: error.message });
     }
 });
 
@@ -75,7 +76,8 @@ router.post('/login', async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error.', error });
+        console.error('LOGIN ERROR:', error);
+        res.status(500).json({ message: 'Internal server error.', error: error.message });
     }
 });
 

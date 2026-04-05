@@ -4,15 +4,35 @@ import "../styles/dashboard.css";
 import logo from "../assets/black-rock-logo.png";
 import trips from "../data/tripsData";
 
-function TripDetailsPage()
-{
+function TripDetailsPage() {
   const navigate = useNavigate();
   const { tripId } = useParams();
 
-  const trip = trips.find((t) => t.id === tripId);
+  const localReservations =
+    JSON.parse(localStorage.getItem("reservations")) || [];
 
-  if (!trip)
-    {
+  const normalizedLocalReservations = localReservations.map((trip) => ({
+    id: trip._id,
+    vehicleName: trip.vehicleName || "Reserved Vehicle",
+    totalPrice: trip.totalPrice || 0,
+    dateRange: trip.dateRange || "Trip dates unavailable",
+    status: trip.status || "Upcoming",
+    imageClass: trip.imageClass || "trip-image",
+    pickupLocation: trip.pickupLocation || "Orlando, FL",
+    dropoffLocation: trip.pickupLocation || "Orlando, FL",
+    milesDriven: 0,
+    tripType: "Upcoming Reservation",
+    bookedOn: new Date().toLocaleDateString(),
+    insurance: "Standard Coverage",
+    description:
+      "This reservation was created in the live reservation flow and saved for the current session.",
+  }));
+
+  const allTrips = [...normalizedLocalReservations, ...trips];
+
+  const trip = allTrips.find((t) => t.id === tripId);
+
+  if (!trip) {
     return (
       <div className="dashboard-page">
         <div className="dashboard-layout">
@@ -38,11 +58,8 @@ function TripDetailsPage()
                 <button className="sidebar-nav-item" onClick={() => navigate("/reservations")}>
                   Reservations
                 </button>
-                <button
-                    className="sidebar-nav-item"
-                    onClick={() => navigate("/account")}
-                >
-                    Account
+                <button className="sidebar-nav-item" onClick={() => navigate("/account")}>
+                  Account
                 </button>
               </nav>
             </div>
@@ -100,7 +117,9 @@ function TripDetailsPage()
               <button className="sidebar-nav-item" onClick={() => navigate("/reservations")}>
                 Reservations
               </button>
-              <button className="sidebar-nav-item">Account</button>
+              <button className="sidebar-nav-item" onClick={() => navigate("/account")}>
+                Account
+              </button>
             </nav>
           </div>
 
@@ -192,7 +211,8 @@ function TripDetailsPage()
                 <p className="vehicle-details-label">Reservation Status:</p>
                 <h4>{trip.status}</h4>
                 <p>
-                  Backend needs to populate this section with real data.
+                  Reservation details are being shown from either the saved session
+                  reservation or the static trip dataset.
                 </p>
               </div>
 
@@ -200,8 +220,8 @@ function TripDetailsPage()
                 <p className="vehicle-details-label">Notes</p>
                 <ul className="vehicle-details-list">
                   <li>Trip costs shown in USD</li>
-                  <li>Displayed miles can come from backend whenever</li>
-                  <li>Status and booking dates should be API-driven</li>
+                  <li>Session reservations appear here immediately</li>
+                  <li>Status and dates can later be fully API-driven</li>
                 </ul>
               </div>
             </aside>

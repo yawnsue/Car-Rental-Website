@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 import logo from "../assets/black-rock-logo.png";
 
@@ -24,67 +24,93 @@ const demoTrips = [
   },
 ];
 
-function CustomerDashboard()
-{
+function CustomerDashboard() {
   const [bookings, setBookings] = useState([]);
   const navigate = useNavigate();
 
-  /*
-  TEMPORARY UI PREVIEW DATA:
-  If no real bookings are returned yet, Demo Trips will show on
-  user dashboard for a better look.
-
-  BACKEND NOTE:
-  Once real booking data is consistently available, this fallback can be
-  removed or replaced with proper data from the API.
-*/
-  const displayTrips = bookings.length > 0 ? bookings : demoTrips;
-  const hasRealBookings = bookings.length > 0;
-
   useEffect(() => {
-    const fetchMyBookings = async () =>
-      {
-      try
-      {
-        /*
-          TEMP. NOTE BACKEND
-          Replace with authenticated request.
-        */
-        const response = await fetch("http://localhost:5000/api/bookings/my-bookings");
+    const fetchMyBookings = async () => {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+      const userId = user?._id || user?.id;
+      const localReservations =
+        JSON.parse(localStorage.getItem("reservations")) || [];
+
+      try {
+        if (!userId) {
+          setBookings(localReservations);
+          return;
+        }
+
+        const response = await fetch(
+          `http://localhost:5000/api/bookings/my-bookings/${userId}`,
+          {
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          }
+        );
+
+        if (!response.ok) {
+          setBookings(localReservations);
+          return;
+        }
+
         const data = await response.json();
-        setBookings(Array.isArray(data) ? data : []);
+
+        const normalizedBackend = Array.isArray(data)
+          ? data.map((booking) => ({
+              _id: booking._id,
+              vehicleName:
+                booking.vehicle?.make && booking.vehicle?.model
+                  ? `${booking.vehicle.make} ${booking.vehicle.model}`
+                  : "Reserved Vehicle",
+              totalPrice: booking.totalPrice,
+              dateRange: `${booking.startDate?.slice(0, 10) || ""} - ${
+                booking.endDate?.slice(0, 10) || ""
+              }`,
+              status: booking.status || "Upcoming",
+              imageClass: "trip-image",
+              canCancel: true,
+            }))
+          : [];
+
+        setBookings([...normalizedBackend, ...localReservations]);
       } catch (err) {
         console.error(err);
-        setBookings([]);
+        setBookings(localReservations);
       }
     };
 
     fetchMyBookings();
   }, []);
 
-  const handleCancelBooking = async (bookingId) =>
-    {
-    try
-    {
-      /*
-        TEMP. NOTE BACKEND
-        Replace with authenticated cancellation.
-      */
-      await fetch(`http://localhost:5000/api/bookings/${bookingId}`,
-      {
-        method: "DELETE",
-      });
+  const handleCancelBooking = async (bookingId) => {
+    const token = localStorage.getItem("token");
 
-      setBookings(bookings.filter((b) => b._id !== bookingId));
-      alert("Booking cancelled.");
-    }
-    catch (err)
-    {
+    try {
+      await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (err) {
       console.error(err);
     }
+
+    const updated = bookings.filter((b) => b._id !== bookingId);
+    setBookings(updated);
+    localStorage.setItem(
+      "reservations",
+      JSON.stringify(updated.filter((b) => String(b._id).startsWith("local-")))
+    );
+    alert("Booking cancelled.");
   };
 
-  const hasBookings = bookings.length > 0;
+  const displayTrips = bookings.length > 0 ? bookings : demoTrips;
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = currentUser?.role === "Administrator";
 
   return (
     <div className="dashboard-page">
@@ -103,43 +129,37 @@ function CustomerDashboard()
             </div>
 
             <nav className="sidebar-nav">
-              <button
-                className="sidebar-nav-item active"
-                onClick={() => navigate("/browse")}
-              >
+              <button className="sidebar-nav-item active" onClick={() => navigate("/browse")}>
                 Dashboard
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/trips")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/trips")}>
                 My Trips
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/vehicles")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/vehicles")}>
                 Browse Vehicles
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/reservations")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/reservations")}>
                 Reservations
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/account")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/account")}>
                 Account
               </button>
+              {isAdmin && (
+                <button className="sidebar-nav-item" onClick={() => navigate("/admin")}>
+                  Admin Dashboard
+                </button>
+              )}
             </nav>
           </div>
 
           <div className="sidebar-bottom">
-            <button 
+            <button
               className="btn btn-secondary dashboard-btn-sm"
-              onClick={() => navigate("/")}
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/");
+              }}
             >
               Logout
             </button>
@@ -171,7 +191,7 @@ function CustomerDashboard()
                   <p className="summary-card-label">Upcoming Trips</p>
                 </div>
                 <p className="summary-card-value">{displayTrips.length}</p>
-                <p className="summary-card-meta">Next: June 24, 2026</p>
+                <p className="summary-card-meta">Reservations synced from app flow</p>
               </article>
 
               <article className="dashboard-card summary-card">
@@ -179,8 +199,8 @@ function CustomerDashboard()
                   <div className="summary-icon">🚗</div>
                   <p className="summary-card-label">Total Trips</p>
                 </div>
-                <p className="summary-card-value">5</p>
-                <p className="summary-card-meta">All Time</p>
+                <p className="summary-card-value">{displayTrips.length}</p>
+                <p className="summary-card-meta">Current Session</p>
               </article>
 
               <article className="dashboard-card summary-card">
@@ -208,68 +228,58 @@ function CustomerDashboard()
               </div>
 
               <div className="trips-list">
-  {displayTrips.map((trip, index) => (
-    <article className="trip-card" key={trip._id}>
-      <div className={trip.imageClass}></div>
+                {displayTrips.map((trip) => (
+                  <article className="trip-card" key={trip._id}>
+                    <div className={trip.imageClass}></div>
 
-      <div className="trip-info">
-        <div className="trip-title-row">
-          <h4 className="trip-title">
-            {hasRealBookings ? "Reserved Vehicle" : trip.vehicleName}
-          </h4>
+                    <div className="trip-info">
+                      <div className="trip-title-row">
+                        <h4 className="trip-title">{trip.vehicleName}</h4>
 
-          <span
-            className={`trip-status ${
-              trip.status === "Upcoming" ? "upcoming" : "completed"
-            }`}
-          >
-            {trip.status}
-          </span>
-        </div>
+                        <span
+                          className={`trip-status ${
+                            trip.status === "Upcoming" || trip.status === "Confirmed"
+                              ? "upcoming"
+                              : "completed"
+                          }`}
+                        >
+                          {trip.status}
+                        </span>
+                      </div>
 
-        <div className="trip-meta">
-          <div className="trip-meta-row">
-            <span className="trip-meta-dot"></span>
-            <span>
-              {hasRealBookings
-                ? "Trip dates coming from backend"
-                : trip.dateRange}
-            </span>
-          </div>
+                      <div className="trip-meta">
+                        <div className="trip-meta-row">
+                          <span className="trip-meta-dot"></span>
+                          <span>{trip.dateRange}</span>
+                        </div>
 
-          <div className="trip-meta-row">
-            <span className="trip-meta-dot"></span>
-            <span>Total: ${trip.totalPrice}</span>
-          </div>
-        </div>
-      </div>
+                        <div className="trip-meta-row">
+                          <span className="trip-meta-dot"></span>
+                          <span>Total: ${trip.totalPrice}</span>
+                        </div>
+                      </div>
+                    </div>
 
-      <div className="trip-actions">
-        <button
-          className="btn dashboard-btn-sm trip-btn-outline"
-          onClick={() => navigate(`/trip-details/${trip._id}`)}
-        >
-          View Details
-        </button>
+                    <div className="trip-actions">
+                      <button
+                        className="btn dashboard-btn-sm trip-btn-outline"
+                        onClick={() => navigate(`/trip-details/${trip._id}`)}
+                      >
+                        View Details
+                      </button>
 
-        {(hasRealBookings || trip.canCancel) && (
-          <button
-            className="btn dashboard-btn-sm trip-btn-danger"
-            onClick={() =>
-            {
-              if (hasRealBookings)
-              {
-                handleCancelBooking(trip._id);
-              }
-            }}
-          >
-            Cancel Trip
-          </button>
-        )}
-      </div>
-    </article>
-  ))}
-</div>
+                      {trip.canCancel !== false && (
+                        <button
+                          className="btn dashboard-btn-sm trip-btn-danger"
+                          onClick={() => handleCancelBooking(trip._id)}
+                        >
+                          Cancel Trip
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
             </section>
           </div>
         </main>

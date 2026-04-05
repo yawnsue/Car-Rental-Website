@@ -1,11 +1,18 @@
 # Car-Rental-Website
-Will use Databases & Auth 
+
+MERN car rental project with authentication and role-based access.
 
 ## How to Run the Project
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) installed
 - [MongoDB](https://www.mongodb.com/try/download/community) installed and running locally
+
+## Project Structure
+
+- `backend/server` → Express
+- `frontend` → React 
+- `database/models` → Mongo
 
 ### Backend Setup
 1. Open a terminal and navigate to the backend folder: cd backend/server
@@ -15,13 +22,17 @@ npm install
 node server.js
    The backend will run on http://localhost:5000
 
+-MongoDB must be running locally on: mongodb://127.0.0.1:27017/turo_rental_db
+-User rights can be changed in MongoDB under users for either "Administrator" or "Standard"
+
 ### Frontend Setup
-1. Open another terminal and navigate to the frontend folder:
-cd frontend
+1. Open another terminal and navigate to the frontend folder: cd frontend
 2. Install dependencies:
 npm install
 3. Start the development server:
 npm run dev
+   The frontend will run on http://localhost:5173/car-rental/
+
 
 ## Authentication (JWT)
 The app uses JSON Web Token (JWT) authentication with bcrypt password hashing.

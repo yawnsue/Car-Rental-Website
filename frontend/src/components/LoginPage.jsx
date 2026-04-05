@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 import logo from "../assets/black-rock-logo.png";
 
-function LoginPage({ onLogin }) {
+function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const API_URL = "http://localhost:5001/api/users";
+  const API_URL = "http://localhost:5000/api/users";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,20 +21,9 @@ function LoginPage({ onLogin }) {
       return;
     }
 
-   /* 
-      TEMP. FRONT END LOGIN
-      I bypassed backend authentication so I can properly develop the UI
-      and ensure it works appropriately.
-
-      BACKEND / AUTHENTICATION:
-        - login/signup API request.
-        - credential validation.
-        - token handling.
-        - redirect logic.
-    */
-
     try {
       const endpoint = isSignUp ? `${API_URL}/register` : `${API_URL}/login`;
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,11 +37,21 @@ function LoginPage({ onLogin }) {
         return;
       }
 
-      // Store token and user info
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
 
-      navigate("/browse");
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      const role = data?.user?.role;
+
+      if (role === "Administrator") {
+        navigate("/admin");
+      } else {
+        navigate("/browse");
+      }
     } catch (err) {
       setError("Unable to connect to server.");
     }
@@ -72,12 +71,10 @@ function LoginPage({ onLogin }) {
             <div className="gold-line"></div>
             <h1 className="brand-title">Ride in Style. Book with Confidence.</h1>
             <p className="brand-text">
-              Black Rock Solutions delivers a premium rental experience right here 
-              in Central Florida. Stop by for dependable vehicle access for every 
+              Black Rock Solutions delivers a premium rental experience right here
+              in Central Florida. Stop by for dependable vehicle access for every
               kind of driver.
             </p>
-
-            
           </div>
         </section>
 

@@ -1,18 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/dashboard.css";
 import logo from "../assets/black-rock-logo.png";
 
 const demoTrips = [
-  {
-    _id: "reservation-1",
-    vehicleName: "2023 Ford Mustang GT",
-    totalPrice: 400,
-    dateRange: "June 24 - June 27, 2026",
-    status: "Upcoming",
-    imageClass: "trip-image",
-    canCancel: true,
-  },
   {
     _id: "demo-trip-2",
     vehicleName: "2022 Honda CRV Hybrid",
@@ -54,6 +45,18 @@ const demoTrips = [
 function MyTripsPage() {
   const navigate = useNavigate();
 
+  const trips = useMemo(() => {
+    const localReservations = JSON.parse(localStorage.getItem("reservations")) || [];
+    return [...localReservations, ...demoTrips];
+  }, []);
+
+  const handleCancel = (tripId) => {
+    const currentReservations = JSON.parse(localStorage.getItem("reservations")) || [];
+    const updated = currentReservations.filter((trip) => trip._id !== tripId);
+    localStorage.setItem("reservations", JSON.stringify(updated));
+    window.location.reload();
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-layout">
@@ -71,44 +74,26 @@ function MyTripsPage() {
             </div>
 
             <nav className="sidebar-nav">
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/browse")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/browse")}>
                 Dashboard
               </button>
-              <button
-                className="sidebar-nav-item active"
-                onClick={() => navigate("/trips")}
-              >
+              <button className="sidebar-nav-item active" onClick={() => navigate("/trips")}>
                 My Trips
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/vehicles")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/vehicles")}>
                 Browse Vehicles
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/reservations")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/reservations")}>
                 Reservations
               </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => navigate("/account")}
-              >
+              <button className="sidebar-nav-item" onClick={() => navigate("/account")}>
                 Account
               </button>
             </nav>
           </div>
 
           <div className="sidebar-bottom">
-            <button
-              className="btn btn-secondary dashboard-btn-sm"
-              onClick={() => navigate("/")}
-            >
+            <button className="btn btn-secondary dashboard-btn-sm" onClick={() => navigate("/")}>
               Logout
             </button>
           </div>
@@ -140,16 +125,18 @@ function MyTripsPage() {
             </div>
 
             <div className="trips-list">
-              {demoTrips.map((trip) => (
+              {trips.map((trip) => (
                 <article className="trip-card" key={trip._id}>
-                  <div className={trip.imageClass}></div>
+                  <div className={trip.imageClass || "trip-image"}></div>
 
                   <div className="trip-info">
                     <div className="trip-title-row">
                       <h4 className="trip-title">{trip.vehicleName}</h4>
                       <span
                         className={`trip-status ${
-                          trip.status === "Upcoming" ? "upcoming" : "completed"
+                          trip.status === "Upcoming" || trip.status === "Confirmed"
+                            ? "upcoming"
+                            : "completed"
                         }`}
                       >
                         {trip.status}
@@ -171,14 +158,17 @@ function MyTripsPage() {
 
                   <div className="trip-actions">
                     <button
-                        className="btn dashboard-btn-sm trip-btn-outline"
-                        onClick={() => navigate(`/trip-details/${trip._id}`)}
+                      className="btn dashboard-btn-sm trip-btn-outline"
+                      onClick={() => navigate(`/trip-details/${trip._id}`)}
                     >
                       View Details
                     </button>
 
-                    {trip.canCancel && (
-                      <button className="btn dashboard-btn-sm trip-btn-danger">
+                    {trip.canCancel !== false && (
+                      <button
+                        className="btn dashboard-btn-sm trip-btn-danger"
+                        onClick={() => handleCancel(trip._id)}
+                      >
                         Cancel Trip
                       </button>
                     )}
